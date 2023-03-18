@@ -61,6 +61,7 @@ def train(x_train_head, x_train_body, x_train_image, y_train, modelfolder, board
             print("Train...\n")
             length = int(float(len(y_train)) / 5)
 
+
             for epoch in range(FLAGS.num_epochs):
                 print(' ----------- epoch No.' + str(epoch + 1) + ' ----------- ')
                 for i in range(5):  # 5-fold
