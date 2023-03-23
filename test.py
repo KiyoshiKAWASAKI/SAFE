@@ -2,10 +2,9 @@ import tensorflow as tf
 import numpy as np
 from sklearn.model_selection import train_test_split
 import xlwt
+import sys
 
-def test(x_test_head, x_test_body, x_test_image,  y_test, model):
-
-    checkpoint_file = model
+def test(x_test_head, x_test_body, x_test_image,  y_test, model_dir, model):
 
     graph = tf.Graph()
     with graph.as_default():
@@ -18,8 +17,10 @@ def test(x_test_head, x_test_body, x_test_image,  y_test, model):
             # Initialize all variables
             sess.run(tf.compat.v1.global_variables_initializer())
 
-            saver = tf.compat.v1.train.import_meta_graph("{}.meta".format(checkpoint_file))
-            saver.restore(sess, checkpoint_file)
+            print(model)
+
+            saver = tf.compat.v1.train.import_meta_graph(model)
+            saver.restore(sess, tf.train.latest_checkpoint(model_dir))
 
             predictions = graph.get_operation_by_name("loss/predictions").outputs[0]
             accuracy = graph.get_operation_by_name("loss/accuracy").outputs[0]
@@ -121,59 +122,51 @@ def test(x_test_head, x_test_body, x_test_image,  y_test, model):
 
 
 if __name__ == '__main__':
+    selected_epoch = 20
+
+    modelfolder = '/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/safe_model_FakeNewsNet_Dataset'
+    outdir = '/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/safe_test_results_FakeNewsNet_Dataset'
+
+    model = modelfolder + "/models" + str(selected_epoch) + ".meta"
+
     print('===============================================')
     print('load vectors and labels ... ')
 
-    x_head = np.load('~/pf_embedding/case_headline.npy')
-    x_body = np.load('~/pf_embedding/case_body.npy')
-    x_image = np.load('~/pf_embedding/case_image.npy')
-    y = np.load('~/pf_embedding/case_y_fn.npy')
+    # Use our private data for test
+    x_body = np.load("/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/"
+                     "safe_data/jan01_jan02_2023_triplets_npy/all_words.npy")
+    x_image = np.load("/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/"
+                      "safe_data/jan01_jan02_2023_triplets_npy/all_imgs.npy")
+    x_names = np.load("/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/"
+                      "safe_data/jan01_jan02_2023_triplets_npy/all_names.npy")
 
-    # I think this is the name list of all the samples - JH
-    outdir = '~/pf_embedding/'
-    with open(outdir + 'case_keys.txt', 'r') as f:
-        key_list = f.readlines()
+    print("x_body: ", x_body.shape)
+    print("x_image: ", x_image.shape)
+    print("x_names: ", x_names.shape)
 
-    key_list = [key[:-1] for key in key_list]
-    key_list = np.array(key_list)
+    nb_samples = x_body.shape[0]
 
-    print('split training set and test set ... ')
-    x_head_train, x_head_test, y_train, y_test = train_test_split(x_head, y, test_size=0.2, random_state=4)
-    x_body_train, x_body_test, x_image_train, x_image_test = train_test_split(x_body, x_image, test_size=0.2,
-                                                                              random_state=4)
+    # Load training data but just use as place holders because the model needs these input
+    x_head = np.load('/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/all_headlines.npy')
+    y = np.load('/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/all_labels.npy')
 
-    key_train, key_test, y_train, y_test = train_test_split(key_list, y, test_size=0.2, random_state=4)
+    x_head = x_head[:nb_samples, :, :]
+    y = y[:nb_samples, :]
 
-    modelfolder = './ckp-pre-e-r-1-0_ds_case/iteration'
+    print("x_head (dummy): ", x_head.shape)
+    print("y (dummy): ", y.shape)
 
     print('===============================================')
-    print('test......')
+    print('Running test...')
 
-    wb = xlwt.Workbook()
-    sheet2 = wb.add_sheet('case', cell_overwrite_ok=True)
-    sheet2.write(0, 0, 'news id')
-    sheet2.write(0, 1, 'ground truth')
-    sheet2.write(0, 2, 'predicted label')
 
-    ''' TO FIND OUT THE CKP WITH THE BEST PERFORMANCE '''
+    acc, pre, rec, f1, tp, tn, fp, fn, all_predictions_fake = test(x_head,
+                                                                   x_body,
+                                                                   x_image,
+                                                                   y,
+                                                                   modelfolder,
+                                                                   model)
 
-    ckp_index = 3
-    model = modelfolder + str(ckp_index)
-    print('test model : ' + model)
-    acc, pre, rec, f1, tp, tn, fp, fn, all_predictions_fake = test(x_head_test, x_body_test, x_image_test, y_test, model)
-    for i in range(len(all_predictions_fake)):
-        sheet2.write(i+1, 0, str(key_test[i]))
-        if y_test[i][0] == 1:
-            sheet2.write(i+1, 1, "fake")
-        else:
-            sheet2.write(i + 1, 1, "real")
-
-        if all_predictions_fake[i] == 0:
-            sheet2.write(i + 1, 2, "fake")
-        else:
-            sheet2.write(i + 1, 2, "real")
-
-    wb.save('./performance/' + 'performance-pre-e-r-1-0_ds_case_label.xls')
 
 
 

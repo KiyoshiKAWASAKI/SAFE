@@ -70,6 +70,7 @@ class Graph:
 
         with tf.compat.v1.variable_scope("fully-connected_body", dtype=self.dtype) as scope:
             body_vector = tf.compat.v1.layers.dense(h_dropout_body, self.final_len)
+            print(body_vector.shape)
 
         
         # -------------- image convolution layers --------------
