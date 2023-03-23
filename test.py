@@ -129,6 +129,7 @@ if __name__ == '__main__':
     x_image = np.load('~/pf_embedding/case_image.npy')
     y = np.load('~/pf_embedding/case_y_fn.npy')
 
+    # I think this is the name list of all the samples - JH
     outdir = '~/pf_embedding/'
     with open(outdir + 'case_keys.txt', 'r') as f:
         key_list = f.readlines()

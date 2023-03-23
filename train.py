@@ -17,7 +17,7 @@ tf.compat.v1.flags.DEFINE_float("final_len", 32, "the output length of fully con
 
 # Training parameters
 tf.compat.v1.flags.DEFINE_integer("batch_size", 64, "Batch Size (Default: 64)")
-tf.compat.v1.flags.DEFINE_integer("num_epochs", 60, "Number of training epochs (Default: 100)")
+tf.compat.v1.flags.DEFINE_integer("num_epochs", 200, "Number of training epochs (Default: 100)")
 tf.compat.v1.flags.DEFINE_integer("num_batchs", 200, "Number of batchs per fold (Default: 100)")
 tf.compat.v1.flags.DEFINE_float("l2_reg_lambda", 3.0, "L2 regularization lambda (Default: 3.0)")
 tf.compat.v1.flags.DEFINE_float("learning_rate", 5e-4, "Which learning rate to start with.")
@@ -98,16 +98,16 @@ def train(x_train_head, x_train_body, x_train_image, y_train, modelfolder, board
                             print(" step %d, training accuracy: clickbait %g,  loss %g" % ((batch + 1), train_accuracy, trainloss))
 
                     # training set
-                    summary1 = sess.run(layer.merged, feed_dict={layer.input_headline_: x_batch_head,
-                                                                 layer.input_body_: x_batch_body,
-                                                                 layer.input_image_: x_batch_image,
-                                                                 layer.input_y: y_batch,
-                                                                 layer.dropout_keep_prob: FLAGS.dropout_keep_prob,
-                                                                 layer.batch_size: FLAGS.batch_size})
-
-
-                    # draw training set
-                    writer1.add_summary(summary1, epoch * 5 + i)
+                    # summary1 = sess.run(layer.merged, feed_dict={layer.input_headline_: x_batch_head,
+                    #                                              layer.input_body_: x_batch_body,
+                    #                                              layer.input_image_: x_batch_image,
+                    #                                              layer.input_y: y_batch,
+                    #                                              layer.dropout_keep_prob: FLAGS.dropout_keep_prob,
+                    #                                              layer.batch_size: FLAGS.batch_size})
+                    #
+                    #
+                    # # draw training set
+                    # writer1.add_summary(summary1, epoch * 5 + i)
 
                     # validation set
                     dev_accuracy_fake, dev_loss = sess.run(
@@ -123,6 +123,7 @@ def train(x_train_head, x_train_body, x_train_image, y_train, modelfolder, board
                 if (epoch + 1) % 1 == 0:
                     saver = tf.compat.v1.train.Saver()
                     saver.save(sess, modelfolder + str(epoch+1))
+                    print("Saved one model.")
 
 
 
@@ -131,17 +132,17 @@ def main(_):
     print('===============================================')
     print('load vectors and labels ... ')
 
-    x_head = np.load('../pf_embedding/case_headline.npy')
-    x_body = np.load('../pf_embedding/case_body.npy')
-    x_image = np.load('../pf_embedding/case_image.npy')
-    y = np.load('../pf_embedding/case_y_fn.npy')
+    x_head = np.load('/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/all_headlines.npy')
+    x_body = np.load('/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/all_body.npy')
+    x_image = np.load('/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/all_imgs.npy')
+    y = np.load('/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/all_labels.npy')
 
     print('split training set and test set ... ')
     x_head_train, x_head_test, y_train, y_test = train_test_split(x_head, y, test_size=0.2, random_state=4)
     x_body_train, x_body_test, x_image_train, x_image_test = train_test_split(x_body, x_image, test_size=0.2, random_state=4)
 
-    modelfolder = './ckp-pre-e-r-1-0_ds_case/iteration'
-    log = 'save-pre-e-r-1-0_ds_case/logs'
+    modelfolder = '/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/safe_model_FakeNewsNet_Dataset/models'
+    log = '/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/safe_model_FakeNewsNet_Dataset/logs'
 
     train(x_head_train, x_body_train, x_image_train, y_train, modelfolder, log)
 
