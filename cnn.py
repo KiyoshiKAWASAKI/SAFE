@@ -16,7 +16,7 @@ class Graph:
         self.input_y = tf.compat.v1.placeholder(tf.float64, shape=[None, 2], name='input_y')
 
         # transform input data
-        W_trans = tf.Variable(tf.compat.v1.truncated_normal([int(embedding_len), int(input_len)],\
+        W_trans = tf.Variable(tf.compat.v1.truncated_normal([int(embedding_len), int(input_len)],
                                 stddev=0.1, dtype=tf.float64), dtype=tf.float64)
         bias_trans = tf.Variable(tf.constant(0.1, shape=[int(input_len)], dtype=tf.float64), dtype=tf.float64)
         self.input_headline = tf.matmul(self.input_headline_, W_trans) + bias_trans
@@ -70,7 +70,7 @@ class Graph:
 
         with tf.compat.v1.variable_scope("fully-connected_body", dtype=self.dtype) as scope:
             body_vector = tf.compat.v1.layers.dense(h_dropout_body, self.final_len)
-            print(body_vector.shape)
+            # out_body_vector = tf.Variable(body_vector, name= "body_vector")
 
         
         # -------------- image convolution layers --------------
@@ -90,11 +90,11 @@ class Graph:
             h_dropout_image = tf.compat.v1.layers.dropout(flat_pooled_image, self.dropout_keep_prob)
 
         with tf.compat.v1.variable_scope("fully-connected_image", dtype=self.dtype) as scope:
-            image_vector = tf.compat.v1.layers.dense(h_dropout_image, self.final_len)
+            image_vector = tf.compat.v1.layers.dense(h_dropout_image, self.final_len, name="image_vector")
 
 
-        with tf.name_scope('calculate_cos_simi'):
-            combine_image = tf.concat([image_vector, image_vector], 1)
+        with tf.compat.v1.name_scope('calculate_cos_simi'):
+            combine_image = tf.concat([image_vector, image_vector], 1, name="combine_image")
             combine_text = tf.concat([headline_vector, body_vector], 1)
 
             combine_image_norm = tf.sqrt(tf.reduce_sum(tf.square(combine_image), axis=1))
@@ -107,12 +107,11 @@ class Graph:
 
 
         with tf.compat.v1.name_scope("prediction"):
-            vector = tf.concat([headline_vector, body_vector, image_vector], 1)
+            vector = tf.concat([headline_vector, body_vector, image_vector], 1, name="combine_all")
             W = tf.Variable(tf.compat.v1.truncated_normal([self.final_len * 3, 2], stddev=0.1, dtype=tf.float64),
                             dtype=tf.float64)
             bias = tf.Variable(tf.constant(0.1, shape=[2], dtype=tf.float64), dtype=tf.float64)
             y_pre = tf.nn.softmax(tf.matmul(vector, W) + bias)
-
 
         with tf.compat.v1.name_scope('loss'):
             self.loss1 = -tf.reduce_mean(tf.reduce_sum(self.input_y * tf.compat.v1.log(y_pre), axis=1))
