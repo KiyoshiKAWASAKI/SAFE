@@ -5,7 +5,13 @@ import xlwt
 import sys
 import os
 
-def test(x_test_head, x_test_body, x_test_image,  y_test, model_dir, model):
+def test(x_test_head,
+         x_test_body,
+         x_test_image,
+         y_test,
+         model_dir,
+         model,
+         feature_save_path):
 
     graph = tf.Graph()
     with graph.as_default():
@@ -43,8 +49,8 @@ def test(x_test_head, x_test_body, x_test_image,  y_test, model_dir, model):
             body_vector = all_vectors[:, 32:64]
             img_vector = all_vectors[:, 64:]
 
-            print(body_vector.shape)
-            print(img_vector.shape)
+            np.save(os.path.join(feature_save_path, "text_feature.npy"), body_vector)
+            np.save(os.path.join(feature_save_path, "img_feature.npy"), img_vector)
 
 
 
@@ -69,21 +75,32 @@ if __name__ == '__main__':
         print("Processing: ", one_triplet)
 
         # Real data:
-        x_body = np.load(input_npy_folder + "/" + one_triplet + "/all_words.npy")
-        x_image = np.load(input_npy_folder + "/" + one_triplet + "/all_imgs.npy")
-        x_names = np.load(input_npy_folder + "/" + one_triplet + "/all_names.npy")
+        try:
+            x_body = np.load(input_npy_folder + "/" + one_triplet + "/all_words.npy")
+            x_image = np.load(input_npy_folder + "/" + one_triplet + "/all_imgs.npy")
+            x_names = np.load(input_npy_folder + "/" + one_triplet + "/all_names.npy")
 
-        nb_samples = x_body.shape[0]
+            nb_samples = x_body.shape[0]
 
-        # Dummy data
-        # Load training data but just use as place holders because the model needs these input
-        x_head = np.load('/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/all_headlines.npy')
-        y = np.load('/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/all_labels.npy')
+            # Dummy data
+            # Load training data but just use as place holders because the model needs these input
+            x_head = np.load('/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/all_headlines.npy')
+            y = np.load('/afs/crc.nd.edu/group/cvrl/scratch_49/jhuang24/safe_data/all_labels.npy')
 
-        x_head = x_head[:nb_samples, :, :]
-        y = y[:nb_samples, :]
+            x_head = x_head[:nb_samples, :, :]
+            y = y[:nb_samples, :]
 
-        test(x_head, x_body, x_image, y, modelfolder, model)
+            target_save_dir = os.path.join(save_feature_folder, one_triplet)
+
+            if not os.path.isdir(target_save_dir):
+                os.mkdir(target_save_dir)
+                print("Making directory: ", target_save_dir)
+
+            test(x_head, x_body, x_image, y, modelfolder, model, target_save_dir)
+            np.save(os.path.join(target_save_dir, "file_names.npy"), x_names)
+
+        except:
+            continue
 
 
 

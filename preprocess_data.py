@@ -362,15 +362,19 @@ def prepare_each_triplet(img_caption_sif_dir,
 
 
         # Save everything to file
-        print("Image embedding: ", all_img.shape)
-        print("Word embedding: ", all_words.shape)
-        print("Triplet IDs: ", len(all_names))
+        try:
+            print("Image embedding: ", all_img.shape)
+            print("Word embedding: ", all_words.shape)
+            print("Triplet IDs: ", len(all_names))
 
-        np.save(os.path.join(target_save_dir, "all_imgs.npy"), all_img)
-        np.save(os.path.join(target_save_dir, "all_words.npy"), all_words)
+            np.save(os.path.join(target_save_dir, "all_imgs.npy"), all_img)
+            np.save(os.path.join(target_save_dir, "all_words.npy"), all_words)
 
-        all_names = np.asarray(all_names)
-        np.save(os.path.join(target_save_dir, "all_names.npy"), all_names)
+            all_names = np.asarray(all_names)
+            np.save(os.path.join(target_save_dir, "all_names.npy"), all_names)
+
+        except:
+            pass
 
 
 
